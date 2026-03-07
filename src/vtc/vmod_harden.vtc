@@ -1,0 +1,80 @@
+varnishtest "Test vmod-harden: abort when no matching certificate"
+
+feature tls_1_3
+
+shell {
+cat >vtls.cfg <<EOF
+  frontend = {
+      host = "*"
+      port = "0"
+  }
+
+  pem-file = "${testdir}/../etc/example.com.pem"
+  tls-protos = TLSv1.3
+EOF
+}
+
+server s1 {
+	rxreq
+	txresp
+} -start
+
+# TLS frontend with harden VMOD. Cert has example.com, www.example.com, IP 1.2.3.4.
+varnish v1 \
+	-arg "-A ${tmpdir}/vtls.cfg" \
+	-arg "-a http=${tmpdir}/v1-http.sock,HTTP" \
+	-vcl+backend {
+	import harden;
+
+	sub vcl_deliver {
+	}
+} -start
+
+# 1) SNI matches cert (example.com) -> handshake succeeds, request completes.
+client c1 {
+	tls_config {
+		version = TLSv1.3
+		ciphersuites = "TLS_AES_128_GCM_SHA256"
+		servername = "example.com"
+	}
+	tls_handshake
+	txreq
+	rxresp
+	expect resp.status == 200
+	expect tls.failed != "true"
+} -run
+
+# 2) SNI does not match cert -> harden aborts handshake (no fallback for wrong host).
+client c2 {
+	tls_config {
+		version = TLSv1.3
+		ciphersuites = "TLS_AES_128_GCM_SHA256"
+		servername = "nomatch.invalid"
+	}
+	tls_handshake
+	expect tls.failed == "true"
+} -run
+
+# 3) IP address in SNI matches cert SAN (1.2.3.4) -> handshake succeeds.
+client c3 {
+	tls_config {
+		version = TLSv1.3
+		ciphersuites = "TLS_AES_128_GCM_SHA256"
+		servername = "1.2.3.4"
+	}
+	tls_handshake
+	txreq
+	rxresp
+	expect resp.status == 200
+	expect tls.failed != "true"
+} -run
+
+# 4) No SNI sent -> harden aborts handshake (no fallback for anonymous connection).
+client c4 {
+	tls_config {
+		version = TLSv1.3
+		ciphersuites = "TLS_AES_128_GCM_SHA256"
+	}
+	tls_handshake
+	expect tls.failed == "true"
+} -run

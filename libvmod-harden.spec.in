@@ -1,0 +1,45 @@
+%global __debug_package	0
+%global __strip	true
+
+%global vmoddir	%{_libdir}/varnish/vmods
+%global vcldir	%{_datadir}/varnish/vcl
+
+Name:		libvmod-harden
+Version:	0.1
+Release:	1%{?dist}
+Summary:	Harden VMOD for Varnish: abort TLS when no matching certificate
+
+License:	Unlicense
+URL:		https://github.com/usdnag9ugudhi/libvmod-harden
+Source:		%{name}-%{version}.tar.gz
+
+BuildRequires:	pkgconfig(varnishapi) >= 7.5.0
+BuildRequires:	openssl-devel
+
+%description
+Varnish VMOD that aborts the TLS handshake when there is no server
+certificate matching the client's SNI (hostname or IP). Prevents
+using the last-declared fallback cert for a different host.
+
+%prep
+%setup -q
+
+%build
+%configure CFLAGS="%{optflags}" RST2MAN=:
+%make_build V=1
+
+%install
+%make_install
+rm -f %{buildroot}%{vmoddir}/*.la
+
+%check
+%make_build check
+
+%files
+%{_docdir}/%{name}/
+%{_mandir}/man*/*
+%{vmoddir}/libvmod_harden.so
+
+%changelog
+* libvmod-harden maintainers - 0.1
+- Initial package

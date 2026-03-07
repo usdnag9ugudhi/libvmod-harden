@@ -1,0 +1,20 @@
+$Module harden 3 "Abort TLS when no matching certificate"
+
+DESCRIPTION
+===========
+
+The ``harden`` vmod aborts the TLS handshake when there is no server
+certificate matching the client's SNI.  Varnish uses the last declared
+certificate as fallback when no cert matches SNI; this VMOD ensures
+that the fallback is not used for a different hostname or IP by
+registering a certificate callback on every ``SSL_CTX``.  If the client
+sends no SNI, or if the cert (including fallback) does not match the
+requested hostname or IP address, the connection is aborted.  Both hostname and IP address
+certificates (SAN dNSName and iPAddress) are supported.
+
+At VCL warm time the VMOD registers an OpenSSL ``SSL_CTX`` ex_data index
+whose ``new_func`` installs ``SSL_CTX_set_tlsext_servername_callback``
+(to abort when the client sends no SNI) and ``SSL_CTX_set_cert_cb`` (to
+abort when the selected certificate does not match the SNI hostname or IP).
+
+$Event event
