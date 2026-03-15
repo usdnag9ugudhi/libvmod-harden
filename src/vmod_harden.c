@@ -75,14 +75,14 @@ harden_cert_cb(SSL *ssl, void *arg)
 	cert = SSL_get_certificate(ssl);
 	sni = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
 	if (cert == NULL || sni == NULL || sni[0] == '\0')
-		goto fail;
+		return (0);
 	n = strlen(sni);
 	ip_name = sni_ip_strip_brackets(sni, n, &ip_len);
 
 	/* Bracketed SNI (e.g. [::1]) must be copied to get a null-terminated IP string. */
 	if (ip_name != sni) {
 		if (ip_len == 0 || ip_len > INET6_ADDRSTRLEN)
-			goto fail;
+			return (0);
 		memcpy(ip_buf, ip_name, ip_len);
 		ip_buf[ip_len] = '\0';
 		ip_name = ip_buf;
@@ -92,12 +92,8 @@ harden_cert_cb(SSL *ssl, void *arg)
 	} else
 		match = X509_check_host(cert, sni, n, 0, NULL) == 1;
 	if (!match)
-		goto fail;
+		return (0);
 	return (1);
-fail:
-	SSL_certs_clear(ssl);
-	SSL_set_verify_result(ssl, X509_V_ERR_APPLICATION_VERIFICATION);
-	return (0);
 }
 
 int
