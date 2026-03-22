@@ -2,13 +2,16 @@
 
 ## About
 
-A Varnish VMOD that aborts the TLS handshake when there is no server
-certificate matching the client's SNI (Server Name Indication). Varnish
-uses the **last declared certificate** as the fallback when no cert
-matches the requested hostname or IP; this VMOD ensures that the
-fallback is not used for a different host by installing a certificate
-callback on every `SSL_CTX`. Both hostname and IP address certificates
-(SAN dNSName and iPAddress) are supported.
+**libvmod-harden** tightens HTTPS when you have **several certificates**:
+Varnish otherwise may use the **last** certificate as a fallback for a
+non-matching SNI, which can show the wrong cert for the wrong host. This
+VMOD **aborts the TLS handshake** unless the certificate matches the
+client's SNI (hostname or IP). It also aborts if there is no SNI or no
+certificate.
+
+`harden.close()` closes the client connection without sending an HTTP
+page—similar in spirit to nginx `return 444`. Use it only from
+client-side VCL (e.g. `vcl_recv`).
 
 ## Requirements
 
@@ -50,16 +53,17 @@ And then follow the instructions above for installing from a tarball.
 
 ## Usage
 
-Load the VMOD in VCL; no functions need to be called. The behaviour is
-active as soon as the VMOD is loaded (at VCL warm). Connections where
-the client sends no SNI, or the SNI does not match the selected
-certificate, will have the TLS handshake aborted.
+Import `harden` in VCL. Handshake checks run automatically once the VMOD
+is loaded. Optionally call `harden.close()` to drop a client (no
+response body from that call).
 
 ```
 import harden;
 
 sub vcl_recv {
-    # harden runs automatically; no per-request calls
+    if (req.http.X-Drop == "1") {
+        harden.close();
+    }
 }
 ```
 

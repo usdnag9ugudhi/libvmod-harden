@@ -1,0 +1,54 @@
+varnishtest "vmod-harden: close drops connection (TLS and HTTP)"
+
+feature tls_1_3
+
+shell {
+cat >vtls.cfg <<EOF
+  frontend = {
+      host = "*"
+      port = "0"
+  }
+
+  pem-file = "${testdir}/../etc/example.com.pem"
+  tls-protos = TLSv1.3
+EOF
+}
+
+server s1 {
+	rxreq
+	txresp
+} -start
+
+varnish v1 \
+	-arg "-A ${tmpdir}/vtls.cfg" \
+	-arg "-a http=${tmpdir}/v1-http.sock,HTTP" \
+	-vcl+backend {
+	import harden;
+
+	sub vcl_recv {
+		if (req.url == "/close") {
+			harden.close();
+		}
+	}
+
+	sub vcl_deliver {
+	}
+} -start
+
+# close() after TLS: no HTTP response.
+client c_tls {
+	tls_config {
+		version = TLSv1.3
+		ciphersuites = "TLS_AES_128_GCM_SHA256"
+		servername = "example.com"
+	}
+	tls_handshake
+	txreq -url "/close"
+	expect_close
+} -run
+
+# close() on plain HTTP listener.
+client c_http -connect ${tmpdir}/v1-http.sock {
+	txreq -url "/close"
+	expect_close
+} -run

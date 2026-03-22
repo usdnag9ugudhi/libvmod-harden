@@ -11,7 +11,7 @@
 #include <openssl/x509_vfy.h>
 #include <openssl/x509v3.h>
 
-#include "cache/cache.h"
+#include "cache/cache_varnishd.h"
 #include "vcl.h"
 #include "vcc_harden_if.h"
 
@@ -94,6 +94,13 @@ harden_cert_cb(SSL *ssl, void *arg)
 	if (!match)
 		return (0);
 	return (1);
+}
+
+VCL_VOID
+vmod_close(VRT_CTX)
+{
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	Req_Fail(ctx->req, SC_TX_ERROR);
 }
 
 int

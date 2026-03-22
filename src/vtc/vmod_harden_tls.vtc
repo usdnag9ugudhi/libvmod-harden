@@ -1,4 +1,4 @@
-varnishtest "Test vmod-harden: abort when no matching certificate"
+varnishtest "vmod-harden: TLS SNI and certificate matching"
 
 feature tls_1_3
 
@@ -19,10 +19,9 @@ server s1 {
 	txresp
 } -start
 
-# TLS frontend with harden VMOD. Cert has example.com, www.example.com, IP 1.2.3.4.
+# TLS frontend with harden VMOD. Cert: example.com, www.example.com, 1.2.3.4.
 varnish v1 \
 	-arg "-A ${tmpdir}/vtls.cfg" \
-	-arg "-a http=${tmpdir}/v1-http.sock,HTTP" \
 	-vcl+backend {
 	import harden;
 
@@ -30,7 +29,7 @@ varnish v1 \
 	}
 } -start
 
-# 1) SNI matches cert (example.com) -> handshake succeeds, request completes.
+# SNI matches cert -> handshake succeeds.
 client c1 {
 	tls_config {
 		version = TLSv1.3
@@ -44,7 +43,7 @@ client c1 {
 	expect tls.failed != "true"
 } -run
 
-# 2) SNI does not match cert -> harden aborts handshake (no fallback for wrong host).
+# SNI does not match -> handshake aborted.
 client c2 {
 	tls_config {
 		version = TLSv1.3
@@ -55,7 +54,7 @@ client c2 {
 	expect tls.failed == "true"
 } -run
 
-# 3) IP address in SNI matches cert SAN (1.2.3.4) -> handshake succeeds.
+# IP in SNI matches cert SAN -> handshake succeeds.
 client c3 {
 	tls_config {
 		version = TLSv1.3
@@ -69,7 +68,7 @@ client c3 {
 	expect tls.failed != "true"
 } -run
 
-# 4) No SNI sent -> harden aborts handshake (no fallback for anonymous connection).
+# No SNI -> handshake aborted.
 client c4 {
 	tls_config {
 		version = TLSv1.3

@@ -30,7 +30,8 @@ AM_VTC_LOG_FLAGS = \
 	-p vmod_path="$(abs_builddir)/.libs:$(vmoddir):$(VARNISHAPI_VMODDIR)"
 
 TESTS = \
-	vtc/vmod_harden.vtc
+	vtc/vmod_harden_tls.vtc \
+	vtc/vmod_harden_close.vtc
 
 # Documentation
 
