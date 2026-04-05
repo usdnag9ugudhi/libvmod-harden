@@ -28,6 +28,7 @@ varnish v1 \
 	sub vcl_recv {
 		if (req.url == "/close") {
 			harden.close();
+			return (synth(403, "Forbidden"));
 		}
 	}
 

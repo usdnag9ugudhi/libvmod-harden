@@ -9,12 +9,17 @@ one when SNI does not match—so the wrong site can get the wrong cert.
 matches the client's SNI (hostname or IP). No SNI or no cert also stops
 the handshake.
 
-``harden.close()`` (client context only) closes the client connection
-immediately, without sending an HTTP response—similar in idea to nginx
-``return 444``.
+``harden.close()`` (client context only) drops the client connection
+without an HTTP response (like nginx ``return 444``). It only fails the
+transport; it does **not** end VCL handling or drop the VCL **busy** count.
+If ``vcl_recv`` continues (e.g. into hash) after ``close()``, shutdown
+can stall with ``shutdown waiting for N references on <name>`` until those
+counts clear—so **always** follow with a terminal ``return``, e.g.
+``return (synth(503, "Connection closed"));`` or ``return (fail);``.
 
 $Event event
 $Function VOID close()
 $Restrict client
 
-Force-close the client connection (no HTTP response from this call).
+Close the client connection (no HTTP response). Must be followed immediately
+by a terminal ``return`` (typically ``synth`` or ``fail`` in ``vcl_recv``).

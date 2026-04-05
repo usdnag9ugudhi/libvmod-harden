@@ -9,9 +9,12 @@ VMOD **aborts the TLS handshake** unless the certificate matches the
 client's SNI (hostname or IP). It also aborts if there is no SNI or no
 certificate.
 
-`harden.close()` closes the client connection without sending an HTTP
-page—similar in spirit to nginx `return 444`. Use it only from
-client-side VCL (e.g. `vcl_recv`).
+`harden.close()` drops the client without an HTTP response (like nginx
+`return 444`); use only in client-side VCL (e.g. `vcl_recv`). It fails the
+transport only—VCL still holds **busy** until the request FSM finishes, so
+without a terminal return Varnish may keep going (e.g. hash) on a dead
+socket and child shutdown can wait on “references” for that VCL. Always
+call `return (synth(...));` or `return (fail);` right after `close()`.
 
 ## Requirements
 
@@ -53,9 +56,8 @@ And then follow the instructions above for installing from a tarball.
 
 ## Usage
 
-Import `harden` in VCL. Handshake checks run automatically once the VMOD
-is loaded. Optionally call `harden.close()` to drop a client (no
-response body from that call).
+Import `harden` in VCL; TLS checks run on load. With `harden.close()`, use
+an immediate `return (synth(...));` or `return (fail);`.
 
 ```
 import harden;
@@ -63,6 +65,7 @@ import harden;
 sub vcl_recv {
     if (req.http.X-Drop == "1") {
         harden.close();
+        return (synth(503, "Connection closed"));
     }
 }
 ```
