@@ -5,7 +5,7 @@
 %global vcldir	%{_datadir}/varnish/vcl
 
 Name:		libvmod-harden
-Version:	1.1
+Version:	1.2
 Release:	1%{?dist}
 Summary:	Harden VMOD for Varnish: abort TLS when no matching certificate
 
@@ -41,6 +41,11 @@ rm -f %{buildroot}%{vmoddir}/*.la
 %{vmoddir}/libvmod_harden.so
 
 %changelog
+* Sat Sep 26 2026 libvmod-harden maintainers - 1.2
+- Require Varnish 9.1.0
+- Fix panic when harden.close() is called in an ESI include
+- Fix crash after discarding the last VCL importing harden
+
 * Sun Apr 05 2026 libvmod-harden maintainers - 1.1
 - Release 1.1
 

@@ -1,0 +1,84 @@
+vtest "vmod-harden: discarding the VCL does not unmap OpenSSL callbacks"
+
+feature tls_1_3
+
+shell {
+cat >vtls.cfg <<EOF
+  frontend = {
+      host = "*"
+      port = "0"
+  }
+
+  pem-file = "${testdir}/../etc/example.com.pem"
+  tls-protos = TLSv1.3
+EOF
+}
+
+server s1 -repeat 3 {
+	rxreq
+	txresp
+} -start
+
+vcache v1 \
+	-arg "-A ${tmpdir}/vtls.cfg" \
+	-arg "-p vcl_cooldown=1" \
+	-vcl+backend {
+	import harden;
+} -start
+
+client c1 {
+	tls_config {
+		version = TLSv1.3
+		servername = "example.com"
+	}
+	tls_handshake
+	txreq
+	rxresp
+	expect resp.status == 200
+} -run
+
+# Switch to a VCL without harden and discard the only one importing it.
+vcache v1 -vcl+backend { }
+delay 3
+vcache v1 -cliok "vcl.discard vcl1"
+delay 1
+
+# The VMOD stays mapped: handshakes keep working without a crash...
+client c2 {
+	tls_config {
+		version = TLSv1.3
+		servername = "example.com"
+	}
+	tls_handshake
+	txreq
+	rxresp
+	expect resp.status == 200
+} -run
+
+# ...and the SNI check stays in force until varnishd restarts.
+client c3 {
+	tls_config {
+		version = TLSv1.3
+		servername = "nomatch.invalid"
+	}
+	tls_handshake
+	expect tls.failed == "true"
+} -run
+
+# Importing harden again after the discard also works.
+vcache v1 -vcl+backend {
+	import harden;
+}
+
+client c4 {
+	tls_config {
+		version = TLSv1.3
+		servername = "example.com"
+	}
+	tls_handshake
+	txreq
+	rxresp
+	expect resp.status == 200
+} -run
+
+vcache v1 -expect MGT.child_panic == 0

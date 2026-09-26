@@ -7,7 +7,9 @@ Varnish otherwise may use the **last** certificate as a fallback for a
 non-matching SNI, which can show the wrong cert for the wrong host. This
 VMOD **aborts the TLS handshake** unless the certificate matches the
 client's SNI (hostname or IP). It also aborts if there is no SNI or no
-certificate.
+certificate. The check is process-wide: once a VCL importing `harden` has
+been warm, it stays active until `varnishd` restarts, even after that VCL
+is discarded.
 
 `harden.close()` drops the client without an HTTP response (like nginx
 `return 444`); use only in client-side VCL (e.g. `vcl_recv`). It fails the
@@ -15,6 +17,8 @@ transport only—VCL still holds **busy** until the request FSM finishes, so
 without a terminal return Varnish may keep going (e.g. hash) on a dead
 socket and child shutdown can wait on “references” for that VCL. Always
 call `return (synth(...));` or `return (fail);` right after `close()`.
+In an ESI include, `close()` fails that include's VCL instead of closing
+the connection.
 
 ## Requirements
 

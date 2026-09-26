@@ -100,6 +100,13 @@ VCL_VOID
 vmod_close(VRT_CTX)
 {
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(ctx->req, REQ_MAGIC);
+
+	/* The ESI transport has no req_fail; Req_Fail() would assert. */
+	if (ctx->req->esi_level > 0) {
+		VRT_fail(ctx, "harden.close() is not supported in ESI includes");
+		return;
+	}
 	Req_Fail(ctx->req, SC_TX_ERROR);
 }
 

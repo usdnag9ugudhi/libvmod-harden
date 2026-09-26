@@ -9,6 +9,10 @@ one when SNI does not match—so the wrong site can get the wrong cert.
 matches the client's SNI (hostname or IP). No SNI or no cert also stops
 the handshake.
 
+The check is process-wide and is armed when the first VCL importing
+``harden`` becomes warm. It stays active until ``varnishd`` restarts,
+even after every VCL importing ``harden`` has been discarded.
+
 ``harden.close()`` (client context only) drops the client connection
 without an HTTP response (like nginx ``return 444``). It only fails the
 transport; it does **not** end VCL handling or drop the VCL **busy** count.
@@ -23,3 +27,7 @@ $Restrict client
 
 Close the client connection (no HTTP response). Must be followed immediately
 by a terminal ``return`` (typically ``synth`` or ``fail`` in ``vcl_recv``).
+
+In an ESI include (``req.esi_level > 0``) there is no connection of its own
+to close, so ``close()`` instead fails the VCL of that include. The parent
+response is delivered according to the usual ESI error handling.

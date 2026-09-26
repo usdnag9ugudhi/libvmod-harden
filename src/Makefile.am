@@ -5,7 +5,8 @@ AM_CFLAGS = $(VCACHEAPI_CFLAGS)
 vmod_LTLIBRARIES = \
 	libvmod_harden.la
 
-libvmod_harden_la_LDFLAGS = $(VMOD_LDFLAGS) $(LIBSSL_LIBS)
+# OpenSSL keeps pointers to our callbacks forever, so never unmap the VMOD.
+libvmod_harden_la_LDFLAGS = $(VMOD_LDFLAGS) -Wl,-z,nodelete $(LIBSSL_LIBS)
 
 libvmod_harden_la_SOURCES = \
 	vmod_harden.c
@@ -31,7 +32,9 @@ AM_VTC_LOG_FLAGS = \
 
 TESTS = \
 	vtc/vmod_harden_tls.vtc \
-	vtc/vmod_harden_close.vtc
+	vtc/vmod_harden_close.vtc \
+	vtc/vmod_harden_esi.vtc \
+	vtc/vmod_harden_discard.vtc
 
 # Documentation
 

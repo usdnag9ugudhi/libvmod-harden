@@ -1,0 +1,41 @@
+vtest "vmod-harden: close() in an ESI include fails the include, no panic"
+
+server s1 {
+	rxreq
+	expect req.url == "/"
+	txresp -body {<html><esi:include src="/close"/></html>}
+} -start
+
+vcache v1 -vcl+backend {
+	import harden;
+
+	sub vcl_recv {
+		if (req.url == "/close") {
+			harden.close();
+			return (synth(403, "Forbidden"));
+		}
+	}
+
+	sub vcl_backend_response {
+		set beresp.do_esi = true;
+	}
+} -start
+
+logexpect l1 -v v1 -g raw {
+	expect * * VCL_Error "harden.close.. is not supported in ESI includes"
+} -start
+
+client c1 {
+	txreq -url "/"
+	rxresp
+} -run
+
+logexpect l1 -wait
+
+# The child survived and the top-level close() still works.
+client c2 {
+	txreq -url "/close"
+	expect_close
+} -run
+
+vcache v1 -expect MGT.child_panic == 0
