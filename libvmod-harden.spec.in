@@ -13,7 +13,7 @@ License:	Unlicense
 URL:		https://github.com/usdnag9ugudhi/libvmod-harden
 Source:		%{name}-%{version}.tar.gz
 
-BuildRequires:	pkgconfig(varnishapi) >= 7.5.0
+BuildRequires:	pkgconfig(varnishapi) >= 9.1.0
 BuildRequires:	openssl-devel
 
 %description

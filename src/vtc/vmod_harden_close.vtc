@@ -1,4 +1,4 @@
-varnishtest "vmod-harden: close drops connection (TLS and HTTP)"
+vtest "vmod-harden: close drops connection (TLS and HTTP)"
 
 feature tls_1_3
 
@@ -19,7 +19,7 @@ server s1 {
 	txresp
 } -start
 
-varnish v1 \
+vcache v1 \
 	-arg "-A ${tmpdir}/vtls.cfg" \
 	-arg "-a http=${tmpdir}/v1-http.sock,HTTP" \
 	-vcl+backend {

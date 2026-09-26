@@ -24,7 +24,8 @@ To build this VMOD you will need:
 * a C compiler, e.g. GCC or clang
 * pkg-config
 * python3-docutils or docutils in macOS [1]
-* Varnish 7.5 or later from https://varnish.org/
+* Varnish 9.1 or later from https://varnish.org/ (including `varnish-dev`
+  or `varnish-devel` and `vtest`)
 * libssl-dev in Debian/Ubuntu, openssl-devel in Fedora/RHEL.
   See also https://www.openssl.org/
 

@@ -11,7 +11,7 @@
 #include <openssl/x509_vfy.h>
 #include <openssl/x509v3.h>
 
-#include "cache/cache_varnishd.h"
+#include "cache/cache_int.h"
 #include "vcl.h"
 #include "vcc_harden_if.h"
 
