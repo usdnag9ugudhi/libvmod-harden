@@ -1,4 +1,4 @@
-vtest "vmod-harden: TLS SNI and certificate matching"
+varnishtest "vmod-harden: TLS SNI and certificate matching"
 
 feature tls_1_3
 
@@ -20,7 +20,7 @@ server s1 {
 } -start
 
 # TLS frontend with harden VMOD. Cert: example.com, www.example.com, 1.2.3.4.
-vcache v1 \
+varnish v1 \
 	-arg "-A ${tmpdir}/vtls.cfg" \
 	-vcl+backend {
 	import harden;

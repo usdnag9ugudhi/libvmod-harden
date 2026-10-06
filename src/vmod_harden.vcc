@@ -21,7 +21,7 @@ can stall with ``shutdown waiting for N references on <name>`` until those
 counts clear—so **always** follow with a terminal ``return``, e.g.
 ``return (synth(503, "Connection closed"));`` or ``return (fail);``.
 
-$Event event
+$Event vmod_event
 $Function VOID close()
 $Restrict client
 

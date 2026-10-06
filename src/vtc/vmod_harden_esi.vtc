@@ -1,4 +1,4 @@
-vtest "vmod-harden: close() in an ESI include fails the include, no panic"
+varnishtest "vmod-harden: close() in an ESI include fails the include, no panic"
 
 server s1 {
 	rxreq
@@ -6,7 +6,7 @@ server s1 {
 	txresp -body {<html><esi:include src="/close"/></html>}
 } -start
 
-vcache v1 -vcl+backend {
+varnish v1 -vcl+backend {
 	import harden;
 
 	sub vcl_recv {
@@ -38,4 +38,4 @@ client c2 {
 	expect_close
 } -run
 
-vcache v1 -expect MGT.child_panic == 0
+varnish v1 -expect MGT.child_panic == 0
