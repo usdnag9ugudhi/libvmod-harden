@@ -10,8 +10,8 @@ AM_SILENT_RULES([yes])
 AC_ARG_VAR([RST2MAN], [the program to build manuals from reStructuredText])
 AC_CHECK_PROGS([RST2MAN], [rst2man rst2man.py])
 
-VCACHE_REQUIRE([[varnish], [9.1.0]])
-VCACHE_VMODS([harden])
+VARNISH_PREREQ([6.0.0], [6.1])
+VARNISH_VMODS([harden])
 
 # OpenSSL (libssl for TLS cert callback, libcrypto and x509 for cert matching)
 AC_CHECK_HEADER([openssl/ssl.h], [], [AC_MSG_ERROR([openssl/ssl.h not found - install libssl-dev or openssl-devel])])
@@ -36,7 +36,7 @@ AC_OUTPUT
 AS_ECHO("
 	==== $PACKAGE_STRING ====
 
-	varnish:      $VCACHE_VERSION
+	varnish:      $VARNISH_VERSION
 	prefix:       $prefix
 	vmoddir:      $vmoddir
 	vcldir:       $vcldir

@@ -1,8 +1,7 @@
 %global __debug_package	0
 %global __strip	true
 
-%global vmoddir	%{_libdir}/varnish/vmods
-%global vcldir	%{_datadir}/varnish/vcl
+%global vmoddir	%(pkg-config --variable=vmoddir varnishapi)
 
 Name:		libvmod-harden
 Version:	1.2
@@ -13,7 +12,7 @@ License:	Unlicense
 URL:		https://github.com/usdnag9ugudhi/libvmod-harden
 Source:		%{name}-%{version}.tar.gz
 
-BuildRequires:	pkgconfig(varnishapi) >= 9.1.0
+BuildRequires:	pkgconfig(varnishapi) >= 6.0.0
 BuildRequires:	openssl-devel
 
 %description
@@ -41,6 +40,11 @@ rm -f %{buildroot}%{vmoddir}/*.la
 %{vmoddir}/libvmod_harden.so
 
 %changelog
+* Tue Oct 06 2026 libvmod-harden maintainers - 1.2
+- Backport to Varnish Enterprise 6.0 (branch 6.0): build with the
+  VARNISH autoconf macros and varnishtest, include
+  cache/cache_varnishd.h for Req_Fail()
+
 * Sat Sep 26 2026 libvmod-harden maintainers - 1.2
 - Require Varnish 9.1.0
 - Fix panic when harden.close() is called in an ESI include
