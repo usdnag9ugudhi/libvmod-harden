@@ -15,6 +15,14 @@
 #include "vcl.h"
 #include "vcc_harden_if.h"
 
+/*
+ * "$Event event": vmodtool in 6.0.18r7+ prefixes the name (VPFX), older
+ * releases emit it verbatim and don't define VPFX.
+ */
+#ifndef VPFX
+#define vmod_event event
+#endif
+
 static pthread_once_t harden_once_ctrl = PTHREAD_ONCE_INIT;
 
 static int harden_cert_cb(SSL *ssl, void *arg);
